@@ -3,10 +3,6 @@
 #define SERVER_HOST "192.168.1.3:8080"
 #define SERVER_PASSWORD "pass"
 
-#define COMMAND_PLAY_PAUSE "command=pl_pause"
-#define COMMAND_VOLUME_UP "command=volume&val=%2B12.8"
-#define COMMAND_VOLUME_DOWN "command=volume&val=-12.8"
-
 static Window *window;
 
 static ActionBarLayer *action_bar;
@@ -97,13 +93,13 @@ void send_message(char *request) {
 static void click_handler(ClickRecognizerRef recognizer, Window *window) {
 	switch ((int)click_recognizer_get_button_id(recognizer)) {
 		case BUTTON_ID_UP:
-			send_message(COMMAND_VOLUME_UP);
+			send_message("vol_up");
 			break;
 		case BUTTON_ID_DOWN:
-			send_message(COMMAND_VOLUME_DOWN);
+			send_message("vol_down");
 			break;
 		case BUTTON_ID_SELECT:
-			send_message(COMMAND_PLAY_PAUSE);
+			send_message("play_pause");
 			break;
 	}
 }

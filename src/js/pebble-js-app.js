@@ -54,7 +54,17 @@ Pebble.addEventListener('ready', function(e) {});
 Pebble.addEventListener('appmessage', function(e) {
 	console.log('message received: ' + JSON.stringify(e.payload));
 	if (e.payload.server && e.payload.password && e.payload.request) {
-		make_request(e.payload.server, e.payload.password, e.payload.request);
+		switch (e.payload.request) {
+			case 'play_pause':
+				make_request(e.payload.server, e.payload.password, 'command=pl_pause');
+				break;
+			case 'vol_up':
+				make_request(e.payload.server, e.payload.password, 'command=volume&val=%2B12.8');
+				break;
+			case 'vol_down':
+				make_request(e.payload.server, e.payload.password, 'command=volume&val=-12.8');
+				break;
+		}
 	} else {
 		console.log('server, password, or request not set');
 	}
