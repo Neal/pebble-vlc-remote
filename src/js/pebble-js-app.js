@@ -2,6 +2,7 @@ var messageQueue = [];
 
 function sendNextMessage() {
 	if (messageQueue.length > 0) {
+		console.log('sending message to pebble: ' + JSON.stringify(messageQueue[0]));
 		Pebble.sendAppMessage(messageQueue[0], appMessageAck, appMessageNack);
 	}
 }
@@ -29,6 +30,13 @@ function makeRequestToVLC(server, password, request) {
 					title = 'VLC Remote';
 				}
 
+				if (res.state) {
+					status = res.state;
+					status = status.charAt(0).toUpperCase() + status.slice(1);
+				} else {
+					status = 'Unknown';
+				}
+
 				if (res.volume) {
 					volume = (res.volume / 512) * 200;
 					if (volume > 200) volume = 200;
@@ -38,16 +46,9 @@ function makeRequestToVLC(server, password, request) {
 					volume = '0%';
 				}
 
-				if (res.state) {
-					status = res.state;
-					status = status.charAt(0).toUpperCase() + status.slice(1);
-				} else {
-					status = 'Unknown';
-				}
-
 				messageQueue.push({'title': title});
-				messageQueue.push({'volume': volume});
 				messageQueue.push({'status': status});
+				messageQueue.push({'volume': volume});
 			} else {
 				console.log('Request returned error code ' + xhr.status.toString());
 				messageQueue.push({'title': 'Error: ' + xhr.statusText});

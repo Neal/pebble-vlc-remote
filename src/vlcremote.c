@@ -42,12 +42,16 @@ void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, voi
 }
 
 static void in_received_handler(DictionaryIterator *iter, void *context) {
+	Tuple *title_tuple = dict_find(iter, KEY_TITLE);
 	Tuple *status_tuple = dict_find(iter, KEY_STATUS);
 	Tuple *volume_tuple = dict_find(iter, KEY_VOLUME);
-	Tuple *title_tuple = dict_find(iter, KEY_TITLE);
 
+	if (title_tuple) {
+		strncpy(title, title_tuple->value->cstring, sizeof(title));
+		text_layer_set_text(title_layer, title);
+	}
 	if (status_tuple) {
-		strcpy(status, status_tuple->value->cstring);
+		strncpy(status, status_tuple->value->cstring, sizeof(status));
 		text_layer_set_text(status_layer, status);
 		if (strcmp(status, "Playing") == 0) {
 			action_bar_layer_set_icon(action_bar, BUTTON_ID_SELECT, action_icon_pause);
@@ -56,12 +60,8 @@ static void in_received_handler(DictionaryIterator *iter, void *context) {
 		}
 	}
 	if (volume_tuple) {
-		strcpy(volume, volume_tuple->value->cstring);
+		strncpy(volume, volume_tuple->value->cstring, sizeof(volume));
 		text_layer_set_text(volume_layer, volume);
-	}
-	if (title_tuple) {
-		strcpy(title, title_tuple->value->cstring);
-		text_layer_set_text(title_layer, title);
 	}
 }
 
@@ -104,7 +104,7 @@ static void click_handler(ClickRecognizerRef recognizer, Window *window) {
 }
 
 static void click_config_provider(void *context) {
-	const uint16_t repeat_interval_ms = 100;
+	const uint16_t repeat_interval_ms = 1000;
 	window_single_repeating_click_subscribe(BUTTON_ID_UP, repeat_interval_ms, (ClickHandler) click_handler);
 	window_single_repeating_click_subscribe(BUTTON_ID_DOWN, repeat_interval_ms, (ClickHandler) click_handler);
 	window_single_repeating_click_subscribe(BUTTON_ID_SELECT, repeat_interval_ms, (ClickHandler) click_handler);
