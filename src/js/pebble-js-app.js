@@ -1,4 +1,21 @@
-function make_request(server, password, request) {
+var messageQueue = [];
+
+function sendNextMessage() {
+	if (messageQueue.length > 0) {
+		Pebble.sendAppMessage(messageQueue[0], appMessageAck, appMessageNack);
+	}
+}
+
+function appMessageAck(e) {
+	messageQueue.shift();
+	sendNextMessage();
+}
+
+function appMessageNack(e) {
+	console.log("Message rejected by Pebble! " + e.error);
+}
+
+function makeRequestToVLC(server, password, request) {
 	var xhr = new XMLHttpRequest();
 	xhr.open('GET', 'http://' + server + '/requests/status.json?' + request, true, '', password);
 	xhr.onload = function(e) {
@@ -28,19 +45,19 @@ function make_request(server, password, request) {
 					status = 'Unknown';
 				}
 
-				Pebble.sendAppMessage({
-					'title': title,
-					'status': status,
-					'volume': volume
-				});
+				messageQueue.push({'title': title});
+				messageQueue.push({'volume': volume});
+				messageQueue.push({'status': status});
 			} else {
 				console.log('Request returned error code ' + xhr.status.toString());
-				Pebble.sendAppMessage({'title': 'Error: ' + xhr.statusText});
+				messageQueue.push({'title': 'Error: ' + xhr.statusText});
 			}
 		}
+		sendNextMessage();
 	}
 	xhr.onerror = function() {
-		Pebble.sendAppMessage({'title': 'Error: Failed to connect!'});
+		messageQueue.push({'title': 'Error: Failed to connect!'});
+		sendNextMessage();
 	};
 	xhr.send(null);
 }
@@ -52,16 +69,16 @@ Pebble.addEventListener('appmessage', function(e) {
 	if (e.payload.server && e.payload.password && e.payload.request) {
 		switch (e.payload.request) {
 			case 'play_pause':
-				make_request(e.payload.server, e.payload.password, 'command=pl_pause');
+				makeRequestToVLC(e.payload.server, e.payload.password, 'command=pl_pause');
 				break;
 			case 'vol_up':
-				make_request(e.payload.server, e.payload.password, 'command=volume&val=%2B12.8');
+				makeRequestToVLC(e.payload.server, e.payload.password, 'command=volume&val=%2B12.8');
 				break;
 			case 'vol_down':
-				make_request(e.payload.server, e.payload.password, 'command=volume&val=-12.8');
+				makeRequestToVLC(e.payload.server, e.payload.password, 'command=volume&val=-12.8');
 				break;
 			case 'refresh':
-				make_request(e.payload.server, e.payload.password, '');
+				makeRequestToVLC(e.payload.server, e.payload.password, '');
 				break;
 		}
 	} else {
