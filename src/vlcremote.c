@@ -51,8 +51,7 @@ static void in_received_handler(DictionaryIterator *iter, void *context) {
 		text_layer_set_text(status_layer, status);
 		if (strcmp(status, "Playing") == 0) {
 			action_bar_layer_set_icon(action_bar, BUTTON_ID_SELECT, action_icon_pause);
-		}
-		if (strcmp(status, "Paused") == 0) {
+		} else {
 			action_bar_layer_set_icon(action_bar, BUTTON_ID_SELECT, action_icon_play);
 		}
 	}
