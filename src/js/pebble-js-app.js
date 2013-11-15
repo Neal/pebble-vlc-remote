@@ -1,7 +1,6 @@
 function make_request(server, password, request) {
 	var xhr = new XMLHttpRequest();
 	xhr.open('GET', 'http://' + server + '/requests/status.json?' + request, true, '', password);
-	xhr.timeout = 4000;
 	xhr.onload = function(e) {
 		if (xhr.readyState == 4) {
 			if (xhr.status == 200) {
@@ -36,15 +35,12 @@ function make_request(server, password, request) {
 				});
 			} else {
 				console.log('Request returned error code ' + xhr.status.toString());
-				Pebble.sendAppMessage({'title': 'Failed to connect!'});
+				Pebble.sendAppMessage({'title': 'Error: ' + xhr.statusText});
 			}
 		}
 	}
-	xhr.ontimeout = function() {
-		Pebble.sendAppMessage({'title': 'Failed to connect!'});
-	}
 	xhr.onerror = function() {
-		Pebble.sendAppMessage({'title': 'Failed to connect!'});
+		Pebble.sendAppMessage({'title': 'Error: Failed to connect!'});
 	};
 	xhr.send(null);
 }
@@ -63,6 +59,9 @@ Pebble.addEventListener('appmessage', function(e) {
 				break;
 			case 'vol_down':
 				make_request(e.payload.server, e.payload.password, 'command=volume&val=-12.8');
+				break;
+			case 'refresh':
+				make_request(e.payload.server, e.payload.password, '');
 				break;
 		}
 	} else {
