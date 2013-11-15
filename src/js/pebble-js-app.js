@@ -33,7 +33,7 @@ function makeRequestToVLC(server, password, request) {
 					volume = (res.volume / 512) * 200;
 					if (volume > 200) volume = 200;
 					volume = Math.round(volume);
-					volume = volume.toString();
+					volume = volume.toString() + '%';
 				} else {
 					volume = '0%';
 				}

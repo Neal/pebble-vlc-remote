@@ -47,7 +47,7 @@ static void in_received_handler(DictionaryIterator *iter, void *context) {
 	Tuple *title_tuple = dict_find(iter, KEY_TITLE);
 
 	if (status_tuple) {
-		snprintf(status, sizeof(status), "%s", status_tuple->value->cstring);
+		strcpy(status, status_tuple->value->cstring);
 		text_layer_set_text(status_layer, status);
 		if (strcmp(status, "Playing") == 0) {
 			action_bar_layer_set_icon(action_bar, BUTTON_ID_SELECT, action_icon_pause);
@@ -57,11 +57,11 @@ static void in_received_handler(DictionaryIterator *iter, void *context) {
 		}
 	}
 	if (volume_tuple) {
-		snprintf(volume, sizeof(volume), "%s%%", volume_tuple->value->cstring);
+		strcpy(volume, volume_tuple->value->cstring);
 		text_layer_set_text(volume_layer, volume);
 	}
 	if (title_tuple) {
-		snprintf(title, sizeof(title), "%s", title_tuple->value->cstring);
+		strcpy(title, title_tuple->value->cstring);
 		text_layer_set_text(title_layer, title);
 	}
 }
