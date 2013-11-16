@@ -1,8 +1,5 @@
 #include <pebble.h>
 
-#define SERVER_HOST "192.168.1.3:8080"
-#define SERVER_PASSWORD "pass"
-
 static Window *window;
 
 static ActionBarLayer *action_bar;
@@ -24,9 +21,12 @@ static char status[8] = "Unknown";
 static char volume_text[] = "Volume:";
 static char volume[5] = "0%";
 
+static char server_host[30];
+static char server_pass[30];
+
 enum {
-	KEY_SERVER,
-	KEY_PASSWORD,
+	KEY_SERVER_HOST,
+	KEY_SERVER_PASS,
 	KEY_REQUEST,
 	KEY_TITLE,
 	KEY_STATUS,
@@ -41,11 +41,37 @@ void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, voi
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "Failed to send AppMessage to Pebble");
 }
 
+void set_server_host_from_persistent_storage() {
+	if (persist_exists(KEY_SERVER_HOST)) {
+		persist_read_string(KEY_SERVER_HOST, server_host, sizeof(server_host));
+	} else {
+		strncpy(title, "Set options via Pebble app", sizeof(title));
+	}
+}
+
+void set_server_pass_from_persistent_storage() {
+	if (persist_exists(KEY_SERVER_PASS)) {
+		persist_read_string(KEY_SERVER_PASS, server_pass, sizeof(server_pass));
+	} else {
+		strncpy(title, "Set options via Pebble app", sizeof(title));
+	}
+}
+
 static void in_received_handler(DictionaryIterator *iter, void *context) {
+	Tuple *server_host_tuple = dict_find(iter, KEY_SERVER_HOST);
+	Tuple *server_pass_tuple = dict_find(iter, KEY_SERVER_PASS);
 	Tuple *title_tuple = dict_find(iter, KEY_TITLE);
 	Tuple *status_tuple = dict_find(iter, KEY_STATUS);
 	Tuple *volume_tuple = dict_find(iter, KEY_VOLUME);
 
+	if (server_host_tuple) {
+		persist_write_string(KEY_SERVER_HOST, server_host_tuple->value->cstring);
+		set_server_host_from_persistent_storage();
+	}
+	if (server_pass_tuple) {
+		persist_write_string(KEY_SERVER_PASS, server_pass_tuple->value->cstring);
+		set_server_pass_from_persistent_storage();
+	}
 	if (title_tuple) {
 		strncpy(title, title_tuple->value->cstring, sizeof(title));
 		text_layer_set_text(title_layer, title);
@@ -69,9 +95,9 @@ void in_dropped_handler(AppMessageResult reason, void *context) {
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "incoming message from Pebble dropped");
 }
 
-void send_request(char *request) {
-	Tuplet server_tuple = TupletCString(KEY_SERVER, SERVER_HOST);
-	Tuplet password_tuple = TupletCString(KEY_PASSWORD, SERVER_PASSWORD);
+void send_request(char *server_host, char *server_pass, char *request) {
+	Tuplet server_host_tuple = TupletCString(KEY_SERVER_HOST, server_host);
+	Tuplet server_pass_tuple = TupletCString(KEY_SERVER_PASS, server_pass);
 	Tuplet request_tuple = TupletCString(KEY_REQUEST, request);
 
 	DictionaryIterator *iter;
@@ -81,8 +107,8 @@ void send_request(char *request) {
 		return;
 	}
 
-	dict_write_tuplet(iter, &server_tuple);
-	dict_write_tuplet(iter, &password_tuple);
+	dict_write_tuplet(iter, &server_host_tuple);
+	dict_write_tuplet(iter, &server_pass_tuple);
 	dict_write_tuplet(iter, &request_tuple);
 	dict_write_end(iter);
 
@@ -90,23 +116,23 @@ void send_request(char *request) {
 }
 
 static void up_single_click_handler(ClickRecognizerRef recognizer, void *context) {
-	send_request("vol_up");
+	send_request(server_host, server_pass, "vol_up");
 }
 
 static void down_single_click_handler(ClickRecognizerRef recognizer, void *context) {
-	send_request("vol_down");
+	send_request(server_host, server_pass, "vol_down");
 }
 
 static void select_single_click_handler(ClickRecognizerRef recognizer, void *context) {
-	send_request("play_pause");
+	send_request(server_host, server_pass, "play_pause");
 }
 
 static void up_long_click_handler(ClickRecognizerRef recognizer, void *context) {
-	send_request("vol_max");
+	send_request(server_host, server_pass, "vol_max");
 }
 
 static void down_long_click_handler(ClickRecognizerRef recognizer, void *context) {
-	send_request("vol_min");
+	send_request(server_host, server_pass, "vol_min");
 }
 
 static void click_config_provider(void *context) {
@@ -163,6 +189,10 @@ static void window_load(Window *window) {
 }
 
 static void window_unload(Window *window) {
+	gbitmap_destroy(action_icon_vol_up);
+	gbitmap_destroy(action_icon_vol_down);
+	gbitmap_destroy(action_icon_play);
+	gbitmap_destroy(action_icon_pause);
 	text_layer_destroy(title_layer);
 	text_layer_destroy(status_text_layer);
 	text_layer_destroy(status_layer);
@@ -194,13 +224,16 @@ static void init(void) {
 	});
 	window_stack_push(window, true /* animated */);
 
+	set_server_host_from_persistent_storage();
+	set_server_pass_from_persistent_storage();
+
 	text_layer_set_text(title_layer, title);
 	text_layer_set_text(status_text_layer, status_text);
 	text_layer_set_text(status_layer, status);
 	text_layer_set_text(volume_text_layer, volume_text);
 	text_layer_set_text(volume_layer, volume);
 
-	send_request("refresh");
+	send_request(server_host, server_pass, "refresh");
 }
 
 static void deinit(void) {
