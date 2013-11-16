@@ -9,6 +9,8 @@ For now, VLC server IP/port are hard coded, but will soon update to set that via
 * Play/pause with the select button.
 * Volume up 5% with the up button.
 * Volume down 5% with the down button.
+* Volume to max by holding the up button.
+* Volume to 0 by holding the down button.
 * Display filename when available.
 
 ## Configuration

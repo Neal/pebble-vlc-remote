@@ -25,7 +25,7 @@ function makeRequestToVLC(server, password, request) {
 				res = JSON.parse(xhr.responseText);
 
 				if (res.information && res.information.category && res.information.category.meta && res.information.category.meta.filename) {
-					title = res.information.category.meta.filename;
+					title = res.information.category.meta.filename.substring(0,30);
 				} else {
 					title = 'VLC Remote';
 				}
@@ -77,6 +77,12 @@ Pebble.addEventListener('appmessage', function(e) {
 				break;
 			case 'vol_down':
 				makeRequestToVLC(e.payload.server, e.payload.password, 'command=volume&val=-12.8');
+				break;
+			case 'vol_min':
+				makeRequestToVLC(e.payload.server, e.payload.password, 'command=volume&val=0');
+				break;
+			case 'vol_max':
+				makeRequestToVLC(e.payload.server, e.payload.password, 'command=volume&val=512');
 				break;
 			case 'refresh':
 				makeRequestToVLC(e.payload.server, e.payload.password, '');

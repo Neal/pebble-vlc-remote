@@ -69,7 +69,7 @@ void in_dropped_handler(AppMessageResult reason, void *context) {
 	APP_LOG(APP_LOG_LEVEL_DEBUG, "incoming message from Pebble dropped");
 }
 
-void send_message(char *request) {
+void send_request(char *request) {
 	Tuplet server_tuple = TupletCString(KEY_SERVER, SERVER_HOST);
 	Tuplet password_tuple = TupletCString(KEY_PASSWORD, SERVER_PASSWORD);
 	Tuplet request_tuple = TupletCString(KEY_REQUEST, request);
@@ -89,25 +89,33 @@ void send_message(char *request) {
 	app_message_outbox_send();
 }
 
-static void click_handler(ClickRecognizerRef recognizer, Window *window) {
-	switch ((int)click_recognizer_get_button_id(recognizer)) {
-		case BUTTON_ID_UP:
-			send_message("vol_up");
-			break;
-		case BUTTON_ID_DOWN:
-			send_message("vol_down");
-			break;
-		case BUTTON_ID_SELECT:
-			send_message("play_pause");
-			break;
-	}
+static void up_single_click_handler(ClickRecognizerRef recognizer, void *context) {
+	send_request("vol_up");
+}
+
+static void down_single_click_handler(ClickRecognizerRef recognizer, void *context) {
+	send_request("vol_down");
+}
+
+static void select_single_click_handler(ClickRecognizerRef recognizer, void *context) {
+	send_request("play_pause");
+}
+
+static void up_long_click_handler(ClickRecognizerRef recognizer, void *context) {
+	send_request("vol_max");
+}
+
+static void down_long_click_handler(ClickRecognizerRef recognizer, void *context) {
+	send_request("vol_min");
 }
 
 static void click_config_provider(void *context) {
 	const uint16_t repeat_interval_ms = 1000;
-	window_single_repeating_click_subscribe(BUTTON_ID_UP, repeat_interval_ms, (ClickHandler) click_handler);
-	window_single_repeating_click_subscribe(BUTTON_ID_DOWN, repeat_interval_ms, (ClickHandler) click_handler);
-	window_single_repeating_click_subscribe(BUTTON_ID_SELECT, repeat_interval_ms, (ClickHandler) click_handler);
+	window_single_repeating_click_subscribe(BUTTON_ID_UP, repeat_interval_ms, up_single_click_handler);
+	window_single_repeating_click_subscribe(BUTTON_ID_DOWN, repeat_interval_ms, down_single_click_handler);
+	window_single_repeating_click_subscribe(BUTTON_ID_SELECT, repeat_interval_ms, select_single_click_handler);
+	window_long_click_subscribe(BUTTON_ID_UP, 700, up_long_click_handler, NULL);
+	window_long_click_subscribe(BUTTON_ID_DOWN, 700, down_long_click_handler, NULL);
 }
 
 static void window_load(Window *window) {
@@ -192,7 +200,7 @@ static void init(void) {
 	text_layer_set_text(volume_text_layer, volume_text);
 	text_layer_set_text(volume_layer, volume);
 
-	send_message("refresh");
+	send_request("refresh");
 }
 
 static void deinit(void) {
