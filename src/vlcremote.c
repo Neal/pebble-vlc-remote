@@ -202,7 +202,7 @@ static void window_unload(Window *window) {
 }
 
 static void app_message_init(void) {
-	app_message_open(64 /* inbound_size */, 64 /* outbound_size */);
+	app_message_open(96 /* inbound_size */, 64 /* outbound_size */);
 	app_message_register_inbox_received(in_received_handler);
 	app_message_register_inbox_dropped(in_dropped_handler);
 	app_message_register_outbox_sent(out_sent_handler);
