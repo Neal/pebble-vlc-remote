@@ -10,12 +10,10 @@
 		"watchface": false
 	},
 	"appKeys": {
-		"server_host": 0,
-		"server_pass": 1,
-		"request": 2,
-		"title": 3,
-		"status": 4,
-		"volume": 5
+		"request": 0,
+		"title": 1,
+		"status": 2,
+		"volume": 3
 	},
 	"resources": {
 		"media": [
