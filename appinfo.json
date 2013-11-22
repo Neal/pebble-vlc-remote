@@ -13,10 +13,17 @@
 		"request": 0,
 		"title": 1,
 		"status": 2,
-		"volume": 3
+		"volume": 3,
+		"seek": 4
 	},
 	"resources": {
 		"media": [
+			{
+				"menuIcon": true,
+				"type": "png",
+				"name": "IMAGE_MENU_ICON",
+				"file": "images/icon.png"
+			},
 			{
 				"type": "png",
 				"name": "ICON_VOLUME_UP",
@@ -36,6 +43,16 @@
 				"type": "png",
 				"name": "ICON_PAUSE",
 				"file": "images/pause.png"
+			},
+			{
+				"type": "png",
+				"name": "ICON_FORWARD",
+				"file": "images/forward.png"
+			},
+			{
+				"type": "png",
+				"name": "ICON_REWIND",
+				"file": "images/rewind.png"
 			}
 		]
 	}
