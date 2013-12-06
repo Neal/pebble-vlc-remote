@@ -1,8 +1,26 @@
-# Pebble VLC Remote
+# VLC Remote
 
-Pebble VLC Remote is a remote control watch app for VLC Media Player. It uses VLC's native web interface API and Pebble SDK 2.0's JavaScript Framework to make HTTP requests.
+VLC Remote is a remote control watch app for VLC Media Player for Pebble which allows you to toggle play/pause, change volume, seek, and get recent status of what's playing and how far you've watched - all right on your wrist!
 
-Use the Pebble app for configuration.
+It uses PebbleKit JS to make HTTP requests to VLC's native web interface API.
+
+## Installation
+
+* Stable release:
+
+	Get the latest `pbw` from [releases](https://github.com/Neal/pebble-vlc-remote/releases).
+
+* Compile your own:
+
+		$ pebble build && pebble install
+
+## Configuration
+
+* Open Pebble mobile app and tap the gear icon to list all the watchapps.
+* Tap VLC Remote to open the configuration page.
+* Enter your VLC server host and password; then tap submit.
+
+## Controls
 
 | Button                                             | Function                  |
 | -------------------------------------------------- | ------------------------- |
@@ -18,3 +36,13 @@ Use the Pebble app for configuration.
 | Single click down <sub><sup>(option 2)</sup></sub> | Seek -10 seconds          |
 | Long click up <sub><sup>(option 2)</sup></sub>     | Seek +1 minute            |
 | Long click down <sub><sup>(option 2)</sup></sub>   | Seek -1 minute            |
+
+## Features
+
+* Toggle play/pause.
+* Increment or decrement volume 5% and set it to lowest or highest.
+* Seek +- 10 seconds and +- 1 minute.
+* Title text layer on top displays "Refreshing..." until it fetches data, then to the filename VLC provides, or an error if one occurs.
+* Status gets the status from VLC - should be "Playing", "Paused", "Stopped", or "Unknown" when not known.
+* Volume is displayed in a progress bar and as text; both range from 0% to 200% (0% when unknown).
+* Seek progress bar shows how far in the movie you are.
