@@ -46,3 +46,10 @@ It uses PebbleKit JS to make HTTP requests to VLC's native web interface API.
 * Status gets the status from VLC - should be "Playing", "Paused", "Stopped", or "Unknown" when not known.
 * Volume is displayed in a progress bar and as text; both range from 0% to 200% (0% when unknown).
 * Seek progress bar shows how far in the movie you are.
+
+## Screenshots
+
+![](http://f.cl.ly/items/46132p210B1F132L3q0H/vlc-remote-screenshot-1.png)&nbsp;&nbsp;
+![](http://f.cl.ly/items/2O1J1I0S3U1z3U3M272E/vlc-remote-screenshot-2.png)&nbsp;&nbsp;
+![](http://f.cl.ly/items/153x1F092u2n0P0K3R14/vlc-remote-screenshot-3.png)&nbsp;&nbsp;
+![](http://f.cl.ly/items/2G1n27310o2h41310u2C/vlc-remote-screenshot-4.png)&nbsp;&nbsp;
