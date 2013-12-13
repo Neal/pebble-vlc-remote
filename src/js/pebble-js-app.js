@@ -121,7 +121,7 @@ Pebble.addEventListener('appmessage', function(e) {
 });
 
 Pebble.addEventListener('showConfiguration', function(e) {
-	var uri = 'https://rawgithub.com/Neal/pebble-vlc-remote/master/html/configuration.html?' +
+	var uri = 'http://neal.github.io/pebble-vlc-remote/?' +
 				'server_host=' + encodeURIComponent(serverHost) +
 				'&server_pass=' + encodeURIComponent(serverPass);
 	console.log('showing configuration at uri: ' + uri);
