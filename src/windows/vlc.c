@@ -1,5 +1,20 @@
 #include <pebble.h>
-#include "progress_bar.h"
+#include "vlc.h"
+#include "../libs/pebble-assist.h"
+#include "../common.h"
+#include "../progress_bar.h"
+
+static void send_request(char *request);
+static void back_single_click_handler(ClickRecognizerRef recognizer, void *context);
+static void up_single_click_handler(ClickRecognizerRef recognizer, void *context);
+static void down_single_click_handler(ClickRecognizerRef recognizer, void *context);
+static void select_single_click_handler(ClickRecognizerRef recognizer, void *context);
+static void up_long_click_handler(ClickRecognizerRef recognizer, void *context);
+static void down_long_click_handler(ClickRecognizerRef recognizer, void *context);
+static void select_long_click_handler(ClickRecognizerRef recognizer, void *context);
+static void click_config_provider(void *context);
+static void window_load(Window *window);
+static void window_unload(Window *window);
 
 static Window *window;
 
@@ -23,24 +38,29 @@ static ProgressBarLayer *seek_bar;
 
 static bool controlling_volume;
 
-enum {
-	KEY_REQUEST,
-	KEY_TITLE,
-	KEY_STATUS,
-	KEY_VOLUME,
-	KEY_SEEK,
-	KEY_CONTROLLING_VOLUME,
-};
+static Player player;
 
-static void out_sent_handler(DictionaryIterator *sent, void *context) {
-	// outgoing message was delivered
+void vlc_init(Player p) {
+	player = p;
+
+	controlling_volume = persist_exists(KEY_VLC_CONTROLLING_VOLUME) ? persist_read_bool(KEY_VLC_CONTROLLING_VOLUME) : true;
+
+	window = window_create();
+	window_set_window_handlers(window, (WindowHandlers) {
+		.load = window_load,
+		.unload = window_unload,
+	});
+	window_stack_push(window, true);
+
+	send_request("refresh");
 }
 
-void out_failed_handler(DictionaryIterator *failed, AppMessageResult reason, void *context) {
-	APP_LOG(APP_LOG_LEVEL_DEBUG, "Failed to send AppMessage to Pebble");
+void vlc_destroy(void) {
+	persist_write_bool(KEY_VLC_CONTROLLING_VOLUME, controlling_volume);
+	window_destroy_safe(window);
 }
 
-static void in_received_handler(DictionaryIterator *iter, void *context) {
+void vlc_in_received_handler(DictionaryIterator *iter) {
 	Tuple *title_tuple = dict_find(iter, KEY_TITLE);
 	Tuple *status_tuple = dict_find(iter, KEY_STATUS);
 	Tuple *volume_tuple = dict_find(iter, KEY_VOLUME);
@@ -64,12 +84,12 @@ static void in_received_handler(DictionaryIterator *iter, void *context) {
 	}
 }
 
-void in_dropped_handler(AppMessageResult reason, void *context) {
-	APP_LOG(APP_LOG_LEVEL_DEBUG, "Incoming AppMessage from Pebble dropped");
-}
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - //
 
-void send_request(char *request) {
+static void send_request(char *request) {
 	Tuplet request_tuple = TupletCString(KEY_REQUEST, request);
+	Tuplet index_tuple = TupletInteger(KEY_INDEX, player.index);
+	Tuplet player_tuple = TupletInteger(KEY_PLAYER, MediaPlayerVLC);
 
 	DictionaryIterator *iter;
 	app_message_outbox_begin(&iter);
@@ -79,9 +99,16 @@ void send_request(char *request) {
 	}
 
 	dict_write_tuplet(iter, &request_tuple);
+	dict_write_tuplet(iter, &index_tuple);
+	dict_write_tuplet(iter, &player_tuple);
 	dict_write_end(iter);
 
 	app_message_outbox_send();
+}
+
+static void back_single_click_handler(ClickRecognizerRef recognizer, void *context) {
+	vlc_destroy();
+	window_stack_pop(true);
 }
 
 static void up_single_click_handler(ClickRecognizerRef recognizer, void *context) {
@@ -112,6 +139,7 @@ static void select_long_click_handler(ClickRecognizerRef recognizer, void *conte
 
 static void click_config_provider(void *context) {
 	const uint16_t repeat_interval_ms = 1000;
+	window_single_click_subscribe(BUTTON_ID_BACK, back_single_click_handler);
 	window_single_repeating_click_subscribe(BUTTON_ID_UP, repeat_interval_ms, up_single_click_handler);
 	window_single_repeating_click_subscribe(BUTTON_ID_DOWN, repeat_interval_ms, down_single_click_handler);
 	window_single_repeating_click_subscribe(BUTTON_ID_SELECT, repeat_interval_ms, select_single_click_handler);
@@ -120,11 +148,14 @@ static void click_config_provider(void *context) {
 	window_long_click_subscribe(BUTTON_ID_SELECT, 500, select_long_click_handler, NULL);
 }
 
-void handle_minute_tick(struct tm *tick_time, TimeUnits units_changed) {
-	send_request("refresh");
-}
-
 static void window_load(Window *window) {
+	action_icon_volume_up = gbitmap_create_with_resource(RESOURCE_ID_ICON_VOLUME_UP);
+	action_icon_volume_down = gbitmap_create_with_resource(RESOURCE_ID_ICON_VOLUME_DOWN);
+	action_icon_play = gbitmap_create_with_resource(RESOURCE_ID_ICON_PLAY);
+	action_icon_pause = gbitmap_create_with_resource(RESOURCE_ID_ICON_PAUSE);
+	action_icon_forward = gbitmap_create_with_resource(RESOURCE_ID_ICON_FORWARD);
+	action_icon_rewind = gbitmap_create_with_resource(RESOURCE_ID_ICON_REWIND);
+
 	action_bar = action_bar_layer_create();
 	action_bar_layer_add_to_window(action_bar, window);
 	action_bar_layer_set_click_config_provider(action_bar, click_config_provider);
@@ -137,7 +168,7 @@ static void window_load(Window *window) {
 	GRect bounds = layer_get_bounds(window_layer);
 
 	title_layer = text_layer_create((GRect) { .origin = { 5, 0 }, .size = { bounds.size.w - 28, 52 } });
-	text_layer_set_text(title_layer, "VLC Remote");
+	text_layer_set_text(title_layer, player.title);
 	text_layer_set_text_color(title_layer, GColorBlack);
 	text_layer_set_background_color(title_layer, GColorClear);
 	text_layer_set_font(title_layer, fonts_get_system_font(FONT_KEY_GOTHIC_24_BOLD));
@@ -188,60 +219,18 @@ static void window_load(Window *window) {
 }
 
 static void window_unload(Window *window) {
-	progress_bar_layer_destroy(volume_bar);
-	progress_bar_layer_destroy(seek_bar);
 	gbitmap_destroy(action_icon_volume_up);
 	gbitmap_destroy(action_icon_volume_down);
 	gbitmap_destroy(action_icon_play);
 	gbitmap_destroy(action_icon_pause);
 	gbitmap_destroy(action_icon_forward);
 	gbitmap_destroy(action_icon_rewind);
+	action_bar_layer_destroy(action_bar);
 	text_layer_destroy(title_layer);
 	text_layer_destroy(status_text_layer);
 	text_layer_destroy(status_layer);
 	text_layer_destroy(volume_text_layer);
 	text_layer_destroy(volume_layer);
-	action_bar_layer_destroy(action_bar);
-}
-
-static void app_message_init(void) {
-	app_message_open(96 /* inbound_size */, 64 /* outbound_size */);
-	app_message_register_inbox_received(in_received_handler);
-	app_message_register_inbox_dropped(in_dropped_handler);
-	app_message_register_outbox_sent(out_sent_handler);
-	app_message_register_outbox_failed(out_failed_handler);
-}
-
-static void init(void) {
-	action_icon_volume_up = gbitmap_create_with_resource(RESOURCE_ID_ICON_VOLUME_UP);
-	action_icon_volume_down = gbitmap_create_with_resource(RESOURCE_ID_ICON_VOLUME_DOWN);
-	action_icon_play = gbitmap_create_with_resource(RESOURCE_ID_ICON_PLAY);
-	action_icon_pause = gbitmap_create_with_resource(RESOURCE_ID_ICON_PAUSE);
-	action_icon_forward = gbitmap_create_with_resource(RESOURCE_ID_ICON_FORWARD);
-	action_icon_rewind = gbitmap_create_with_resource(RESOURCE_ID_ICON_REWIND);
-
-	app_message_init();
-
-	controlling_volume = persist_exists(KEY_CONTROLLING_VOLUME) ? persist_read_bool(KEY_CONTROLLING_VOLUME) : true;
-
-	window = window_create();
-	window_set_window_handlers(window, (WindowHandlers) {
-		.load = window_load,
-		.unload = window_unload,
-	});
-	window_stack_push(window, true /* animated */);
-
-	tick_timer_service_subscribe(MINUTE_UNIT, handle_minute_tick);
-}
-
-static void deinit(void) {
-	persist_write_bool(KEY_CONTROLLING_VOLUME, controlling_volume);
-	tick_timer_service_unsubscribe();
-	window_destroy(window);
-}
-
-int main(void) {
-	init();
-	app_event_loop();
-	deinit();
+	progress_bar_layer_destroy(volume_bar);
+	progress_bar_layer_destroy(seek_bar);
 }
