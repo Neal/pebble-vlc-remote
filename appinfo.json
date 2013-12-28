@@ -4,7 +4,7 @@
 	"longName": "VLC Remote",
 	"companyName": "Neal",
 	"versionCode": 1,
-	"versionLabel": "1.3.3",
+	"versionLabel": "1.3.4",
 	"capabilities": [ "configurable" ],
 	"watchapp": {
 		"watchface": false
