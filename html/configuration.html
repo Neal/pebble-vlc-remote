@@ -47,13 +47,13 @@
 					if (pair[0] == variable)
 						return decodeURIComponent(pair[1]);
 				}
-				return false;
+				return '';
 			}
 
 			function saveOptions() {
 				var options = {
 					'server_host': $('#server_host').val(),
-					'server_pass': $('#server_pass').val()
+					'server_pass': 'Basic ' + btoa(':' + $('#server_pass').val())
 				}
 				return options;
 			}
@@ -66,7 +66,7 @@
 					document.location = 'pebblejs://close#' + encodeURIComponent(JSON.stringify(saveOptions()));
 				});
 				$('#server_host').val(getQueryVariable('server_host'));
-				$('#server_pass').val(getQueryVariable('server_pass'));
+				$('#server_pass').val(atob(getQueryVariable('server_pass')).substring(7));
 			});
 		</script>
 	</body>

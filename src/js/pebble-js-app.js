@@ -30,7 +30,8 @@ function sendAppMessage(title, status, volume, seek, numTries, transactionId) {
 function makeRequest(request) {
 	request = request || '';
 	var xhr = new XMLHttpRequest();
-	xhr.open('GET', 'http://' + serverHost + '/requests/status.json?' + request, true, '', serverPass);
+	xhr.open('GET', 'http://' + serverHost + '/requests/status.json?' + request, true);
+	xhr.setRequestHeader('Authorization', serverPass);
 	xhr.timeout = timeoutForHTTPRequest;
 	xhr.onload = function(e) {
 		if (xhr.readyState == 4) {
