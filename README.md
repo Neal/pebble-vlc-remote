@@ -1,5 +1,7 @@
 # VLC Remote
 
+### Not maintained anymore.<br>This project has been merged into [Skipstone](https://github.com/Skipstone/Skipstone). Use [Skipstone](https://github.com/Skipstone/Skipstone) instead.
+
 VLC Remote is a remote control watch app for VLC Media Player for Pebble which allows you to toggle play/pause, change volume, seek, and get recent status of what's playing and how far you've watched - all right on your wrist!
 
 It uses PebbleKit JS to make HTTP requests to VLC's native web interface API.
